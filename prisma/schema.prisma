@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  filename  String
+  content   String   @db.Text
+  mimeType  String?
+  fileSize  Int?
+  proteinId String?
+  
+  protein   Protein? @relation(fields: [proteinId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Protein {
+  id          String   @id @default(uuid())
+  name        String
+  sequence    String?  @db.Text
+  maturity    String?
+  createdAt   DateTime @default(now())
+  
+  processes   ProteinProcess[]
+  evidence    Evidence[]
+  documents   Document[]
+}
+
+model Process {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  type        String?
+  
+  proteins    ProteinProcess[]
+}
+
+model ProteinProcess {
+  id        String  @id @default(uuid())
+  proteinId String
+  processId String
+  yield     Float?
+  conditions String? @db.Text
+  
+  protein Protein @relation(fields: [proteinId], references: [id], onDelete: Cascade)
+  process Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+  
+  @@unique([proteinId, processId])
+}
+
+model Evidence {
+  id          String   @id @default(uuid())
+  type        String
+  description String   @db.Text
+  confidence  Float?
+  proteinId   String?
+  
+  protein   Protein? @relation(fields: [proteinId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Query {
+  id        String   @id @default(uuid())
+  question  String   @db.Text
+  answer    String   @db.Text
+  createdAt DateTime @default(now())
+}
